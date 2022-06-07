@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'network/api_service.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -63,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final ApiService service = ApiServiceDio.instance;
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -106,7 +109,13 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: () async {
+
+          final response = await service.getRecipe(recipeId: 716429);
+          print(response.result!.title);
+
+
+        },
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
