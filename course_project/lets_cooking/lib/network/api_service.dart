@@ -40,21 +40,12 @@ abstract class ApiService {
 
   @override
   Future<ApiModel<RecipeModel, Failure>> getRecipe({required int recipeId}) async {
-   // try {
+   try {
       final response = await dio.get(recipeId.toString()+_infoRecipeUrl + _apiKeyUrl);
-
-       //final list = response.data as List<dynamic>;
-      final list = response.data as Map<String,dynamic>;
-
-      //print(list);
-      //final models = list.map((e) => RecipeModel.fromJson(e));
-      final models = RecipeModel.fromJson(list);
-      print(models);
-     // return ApiModel.success(models.toList());
+      final models = RecipeModel.fromJson(response.data as Map<String,dynamic>);
       return ApiModel.success(models);
-    // } catch (e) {
-    //   print('gavno');
-    //   return ApiModel.error(Failure());
-    // }
+    } catch (e) {
+      return ApiModel.error(Failure());
+    }
   }
 }
