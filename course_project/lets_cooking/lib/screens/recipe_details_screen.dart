@@ -1,59 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:lets_cooking/components/favorite_button.dart';
 import 'package:lets_cooking/extensions/string_low_up.dart';
-import 'package:lets_cooking/models/recipe_model.dart';
+import 'package:lets_cooking/models/recipe_details_model.dart';
+import 'package:provider/provider.dart';
 
 import '../constants/colors.dart';
 import '../constants/text_style.dart';
 import '../content_state.dart';
-import '../network/api_service.dart';
+import '../theme/theme_state.dart';
 
-class RecipeDetails extends StatefulWidget {
-  const RecipeDetails({Key? key}) : super(key: key);
-
-  @override
-  State<RecipeDetails> createState() => _RecipeDetailsState();
-}
-
-class _RecipeDetailsState extends State<RecipeDetails> {
-  final ApiService service = ApiServiceDio.instance;
-  var state = ContentState.initial;
-  late RecipeModel recipe;
-
-  Future<void> load(int recipeId) async {
-    setState(() {
-      state = ContentState.loading;
-    });
-    final response = await service.getRecipe(recipeId: recipeId);
-    if (response.hasError) {
-      setState(() {
-        print(response.result);
-        state = ContentState.failure;
-      });
-    } else {
-      setState(() {
-        state =
-            response.result != null ? ContentState.success : ContentState.empty;
-        recipe = response.result!;
-        print(recipe);
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    load(716429);
-    super.initState();
-  }
+class RecipeDetailsScreen extends StatelessWidget {
+  const RecipeDetailsScreen({Key? key, required this.recipeDetails})
+      : super(key: key);
+  final RecipeDetailsModel recipeDetails;
+  static const routeName = '/RecipeDetailsScreen';
 
   @override
   Widget build(BuildContext context) {
+    final stateTheme = context.watch<ThemeState>();
+    var state = ContentState.success;
     switch (state) {
       case ContentState.success:
         return Scaffold(
-          appBar: AppBar(
-            backgroundColor: AppColors.white,
-            elevation: 0,
-          ),
+          appBar: AppBar(),
           body: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
@@ -63,10 +32,8 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    recipe.title,
-                    style: AppTextStyle.h4.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.neutral90),
+                    recipeDetails.title!,
+                    style: Theme.of(context).textTheme.headline4,
                   ),
                 ),
                 const SizedBox(height: 24.0),
@@ -77,20 +44,18 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                         alignment: Alignment.center,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20.0),
-                          child: Image.network(recipe.image),
+                          child: Image.network(recipeDetails.image!),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 25.0, right: 50.0),
                         child: Align(
-                          alignment: Alignment.topRight,
-                          child: IconButton(
-                              onPressed: () {},
-                              icon: const Icon(
-                                Icons.bookmark,
-                                size: 50.0,
-                                color: AppColors.neutral30,
-                              )),
+                            alignment: Alignment.topRight,
+                            child: FavoriteButton(
+                              recipeDetails: recipeDetails,
+                                isFavorite: recipeDetails.isFavorite,
+                                bgColor: AppColors.white)
+
                         ),
                       )
                     ]),
@@ -109,35 +74,34 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                               width: 4.0,
                             ),
                             Text(
-                              recipe.healthScore / 10 >= 0 &&
-                                      recipe.healthScore / 10 <= 5
-                                  ? (recipe.healthScore / 10).toString()
+                              recipeDetails.healthScore! / 10 >= 0 &&
+                                  recipeDetails.healthScore! / 10 <= 5
+                                  ? (recipeDetails.healthScore! / 10 + 0.5).toString()
                                   : '4.5',
-                              style: AppTextStyle.label.copyWith(
+                              style:  Theme.of(context).textTheme.bodyText2!.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.neutral90),
+                                  color: stateTheme.isDark? AppColors.white : AppColors.neutral90),
                             ),
                             const SizedBox(
                               width: 8.0,
                             ),
                             Text(
-                              '(${recipe.aggregateLikes} Reviews)',
-                              style: AppTextStyle.label
-                                  .copyWith(color: AppColors.neutral40),
+                              '(${recipeDetails.aggregateLikes} Reviews)',
+                              style:Theme.of(context).textTheme.bodyText2,
                             ),
                           ],
                         ),
                         Text(
-                          'Servings: ${recipe.servings}',
-                          style: AppTextStyle.label.copyWith(
+                          'Servings: ${recipeDetails.servings}',
+                          style: Theme.of(context).textTheme.bodyText2!.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: AppColors.neutral90),
+                              color: stateTheme.isDark? AppColors.white : AppColors.neutral90),
                         ),
                         Text(
-                          'Ready: ${recipe.readyInMinutes} min.',
-                          style: AppTextStyle.label.copyWith(
+                          'Ready: ${recipeDetails.readyInMinutes} min.',
+                          style: Theme.of(context).textTheme.bodyText2!.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: AppColors.neutral90),
+                              color: stateTheme.isDark? AppColors.white : AppColors.neutral90),
                         )
                       ],
                     ),
@@ -159,7 +123,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                     alignment: Alignment.topLeft,
                                     fit: BoxFit.cover,
                                     image: NetworkImage(
-                                      recipe.image,
+                                      recipeDetails.image!,
                                     ),
                                   )),
                             ),
@@ -170,10 +134,13 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  recipe.creditsText,
-                                  style: AppTextStyle.paragraph.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.neutral100),
+                                  recipeDetails.creditsText != null
+                                      ? recipeDetails.creditsText!
+                                      .split(' ')
+                                      .first
+                                      : 'Amore Mio',
+                                  style: Theme.of(context).textTheme.bodyText1!.copyWith(
+                                      color: stateTheme.isDark? AppColors.neutral10 : AppColors.neutral100),
                                 ),
                                 Row(
                                   children: [
@@ -185,9 +152,21 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                       width: 4.0,
                                     ),
                                     Text(
-                                      '${recipe.winePairing.pairingText.split(' ').last.lowUp().replaceAll('.', '')}, ${recipe.winePairing.pairingText.split(' ').first}',
-                                      style: AppTextStyle.label
-                                          .copyWith(color: AppColors.neutral40),
+                                      '${recipeDetails
+                                          .extendedIngredients![recipeDetails
+                                          .extendedIngredients!.length ~/ 2]
+                                          .aisle!.split(' ')
+                                          .last.lowUp()
+                                          .replaceAll(RegExp(r'[^\w\s]+'), '')}, ${recipeDetails
+                                          .extendedIngredients![recipeDetails
+                                          .extendedIngredients!.length ~/ 3]
+                                          .aisle!.split(' ')
+                                          .first.replaceAll(RegExp(r'[^\w\s]+'), '')}',
+                                      // recipeDetails.winePairing !=
+                                      //         null && recipeDetails.winePairing!.pairingText!.length > 2
+                                      //     ? '${recipeDetails.winePairing!.pairingText!.split(' ').last.lowUp().replaceAll('.', '')}, ${recipeDetails.winePairing!.pairingText!.split(' ').first}'
+                                      //     : 'Palo Alto, California',
+                                      style: Theme.of(context).textTheme.bodyText2,
                                     ),
                                   ],
                                 ),
@@ -207,7 +186,7 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                           ),
                           child: Text(
                             'Follow',
-                            style: AppTextStyle.label
+                            style: Theme.of(context).textTheme.bodyText2!
                                 .copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -223,14 +202,12 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                   children: [
                     Text(
                       'Ingredients',
-                      style: AppTextStyle.h5.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.neutral90),
+                      style: Theme.of(context).textTheme.headline5,
                     ),
                     Text(
-                      '${recipe.extendedIngredients!.length.toString()} items',
-                      style: AppTextStyle.label
-                          .copyWith(color: AppColors.neutral40),
+                      '${recipeDetails.extendedIngredients!.length
+                          .toString()} items',
+                      style: Theme.of(context).textTheme.bodyText2,
                     )
                   ],
                 ),
@@ -239,14 +216,14 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                   fit: FlexFit.loose,
                   child: ListView.builder(
                       shrinkWrap: true,
-                      itemCount: recipe.extendedIngredients!.length,
+                      itemCount: recipeDetails.extendedIngredients!.length,
                       itemBuilder: (context, index) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: Container(
                             height: 76.0,
                             decoration: BoxDecoration(
-                                color: AppColors.neutral10,
+                                color: stateTheme.isDark? AppColors.neutral70 : AppColors.neutral10,
                                 borderRadius: BorderRadius.circular(12.0)),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -263,32 +240,40 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                         decoration: BoxDecoration(
                                             color: AppColors.white,
                                             borderRadius:
-                                                BorderRadius.circular(10.0)),
+                                            BorderRadius.circular(10.0)),
                                         child: Image.network(
-                                            'https://spoonacular.com/cdn/ingredients_100x100/${recipe.extendedIngredients![index].image}'),
+                                          'https://spoonacular.com/cdn/ingredients_100x100/${recipeDetails
+                                              .extendedIngredients![index]
+                                              .image}',
+                                          errorBuilder: (context, exception,
+                                              stacktrace) {
+                                            return Image.asset('assets/images/no_image_placeholder.png', fit: BoxFit.cover,);
+                                          },),
                                       ),
                                     ),
                                     Column(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        MainAxisAlignment.center,
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            recipe.extendedIngredients![index]
-                                                .aisle!,
-                                            style: AppTextStyle.label.copyWith(
+                                            recipeDetails
+                                                .extendedIngredients![index]
+                                                .aisle ?? 'Other',
+                                            overflow: TextOverflow.fade,
+                                            maxLines: 1,
+                                            style: Theme.of(context).textTheme.bodyText2!.copyWith(
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.neutral60),
+                                                color: stateTheme.isDark? AppColors.neutral90 : AppColors.neutral60),
                                           ),
+
                                           Text(
-                                            recipe.extendedIngredients![index]
+                                            recipeDetails
+                                                .extendedIngredients![index]
                                                 .name!
                                                 .lowUp(),
-                                            style: AppTextStyle.paragraph
-                                                .copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColors.neutral90),
+                                            style: Theme.of(context).textTheme.bodyText1,
                                           ),
                                         ]),
                                   ],
@@ -296,9 +281,16 @@ class _RecipeDetailsState extends State<RecipeDetails> {
                                 Padding(
                                   padding: const EdgeInsets.only(right: 16.0),
                                   child: Text(
-                                      '${recipe.extendedIngredients![index].measures!.metric!.amount!.toString()} ${recipe.extendedIngredients![index].measures!.metric!.unitShort}',
-                                      style: AppTextStyle.label.copyWith(
-                                          color: AppColors.neutral60)),
+                                      '${recipeDetails
+                                          .extendedIngredients![index].measures!
+                                          .metric!
+                                          .amount!
+                                          .round()
+                                          .toString()} ${recipeDetails
+                                          .extendedIngredients![index].measures!
+                                          .metric!.unitShort}',
+                                      style: Theme.of(context).textTheme.bodyText2!.copyWith(
+                                          color: stateTheme.isDark? AppColors.neutral90 :AppColors.neutral60)),
                                 ),
                               ],
                             ),
