@@ -51,7 +51,7 @@ class RecipeDetailsModel extends HiveObject{
         title = json['title'] as String?,
         readyInMinutes = json['readyInMinutes'] as int?,
         servings = json['servings'] as int?,
-        image = json['image'] as String?;
+        image = (json['image'] as String?);
 }
 @HiveType(typeId: 1)
 class ExtendedIngredients {

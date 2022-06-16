@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:lets_cooking/main.dart';
+import 'package:lets_cooking/constants/hive_boxes_names.dart';
 import 'package:lets_cooking/models/recipe_details_model.dart';
 
 import '../constants/colors.dart';
@@ -47,13 +47,13 @@ class _FavoriteButtonState extends State<FavoriteButton> {
                 _isFavorite = !_isFavorite;
                 widget.recipeDetails.isFavorite = _isFavorite;
               });
-              if (Hive.box<RecipeDetailsModel>(favoriteRecipesBox)
+              if (Hive.box<RecipeDetailsModel>(HiveBoxesNames.favoriteRecipes)
                   .containsKey(widget.recipeDetails.id!)) {
-                Hive.box<RecipeDetailsModel>(favoriteRecipesBox)
+                Hive.box<RecipeDetailsModel>(HiveBoxesNames.favoriteRecipes)
                     .delete(widget.recipeDetails.id!);
                 return;
               }
-              Hive.box<RecipeDetailsModel>(favoriteRecipesBox)
+              Hive.box<RecipeDetailsModel>(HiveBoxesNames.favoriteRecipes)
                   .put(widget.recipeDetails.id!, widget.recipeDetails);
             },
             padding: EdgeInsets.zero,

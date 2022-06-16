@@ -40,7 +40,7 @@ class ApiServiceDio implements ApiService {
         ? 'random?number=$numberRecipes&tags=$tags'
         : 'random?number=$numberRecipes';
 
-    final String apiKey = _apiKeys[2];
+    final String apiKey = _apiKeys[0];
     // if (xAPIQuotaTotalUsed < 145) {
     //   apiKey = _apiKeys[0];
     // } else {

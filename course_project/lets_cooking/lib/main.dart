@@ -1,36 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:lets_cooking/constants/colors.dart';
 import 'package:lets_cooking/screens/favorite_recipe_screen.dart';
 import 'package:lets_cooking/screens/home_screen.dart';
 import 'package:lets_cooking/screens/recipe_details_screen.dart';
-import 'package:lets_cooking/theme/dark_theme.dart';
-import 'package:lets_cooking/theme/light_theme.dart';
-import 'package:lets_cooking/theme/theme_state.dart';
+import 'package:lets_cooking/themes/dark_theme.dart';
+import 'package:lets_cooking/themes/light_theme.dart';
+import 'package:lets_cooking/states/theme_state.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'constants/text_style.dart';
+import 'constants/hive_boxes_names.dart';
 import 'models/recipe_details_model.dart';
-import 'models/recipes_model.dart';
 import 'screens/welcome_screen.dart';
 
-var listFavoritesRecipes = <int?> [];
 
-const favoriteRecipesBox = 'favorite_recipes';
 
 void main() async {
-  //WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
+  final storage = await SharedPreferences.getInstance();
   await Hive.initFlutter();
   Hive.registerAdapter(RecipeDetailsModelAdapter());
   Hive.registerAdapter(ExtendedIngredientsAdapter());
   Hive.registerAdapter(MeasuresAdapter());
   Hive.registerAdapter(MetricAdapter());
+  await Hive.openBox<RecipeDetailsModel>(HiveBoxesNames.favoriteRecipes);
 
-  await Hive.openBox<RecipeDetailsModel>(favoriteRecipesBox);
   runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(create: (context) => ThemeState()),
+    ChangeNotifierProvider(create: (context) => ThemeState(storage)),
   ], child: const LetsCookingApp()));
 }
 
@@ -54,17 +50,18 @@ class LetsCookingApp extends StatelessWidget {
                   builder: (context) => const WelcomeScreen(),
                 );
               case HomeScreen.routeName:
+                final args = settings.arguments as Map;
                 return MaterialPageRoute(
-                  builder: (context) => const HomeScreen(),
+                  builder: (context) => HomeScreen(
+                    trendRecipes: args['trendRecipes'],
+                    popularRecipes: args['popularRecipes'],
+                  ),
                 );
               case RecipeDetailsScreen.routeName:
                 final args = settings.arguments as RecipeDetailsModel;
                 return MaterialPageRoute(
                   builder: (context) => RecipeDetailsScreen(
                     recipeDetails: args,
-                    // title: args.title,
-                    // body: args.body,
-                    // isBookmark: args.isBookmark,
                   ),
                 );
               case FavoriteRecipesScreen.routeName:
@@ -72,7 +69,7 @@ class LetsCookingApp extends StatelessWidget {
                     builder: (context) => const FavoriteRecipesScreen());
             }
           },
-          home: const HomeScreen());
+      );
     });
 
   }

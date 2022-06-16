@@ -83,6 +83,7 @@ class _PopularCategoryState extends State<PopularCategory> {
                               child: Container(
                                 width: 110.0,
                                 height: 110.0,
+                                clipBehavior: Clip.hardEdge,
                                 decoration: BoxDecoration(
                                   boxShadow: const [
                                     BoxShadow(
@@ -96,17 +97,24 @@ class _PopularCategoryState extends State<PopularCategory> {
                                       width: 16.0,
                                       color: AppColors.neutral10
                                           .withOpacity(0.95)),
-                                  image: e.recipes![index].image != null
-                                      ? DecorationImage(
-                                          image: NetworkImage(
-                                              e.recipes![index].image!),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : const DecorationImage(
-                                          image: AssetImage(
-                                              'assets/images/no_image_placeholder.png'),
-                                          fit: BoxFit.cover,
-                                        ),
+                                  // image: e.recipes![index].image != null
+                                  //     ? DecorationImage(
+                                  //         image: NetworkImage(
+                                  //             e.recipes![index].image!),
+                                  //         fit: BoxFit.cover,
+                                  //       )
+                                  //     : const DecorationImage(
+                                  //         image: AssetImage(
+                                  //             'assets/images/no_image_placeholder.png'),
+                                  //         fit: BoxFit.cover,
+                                  //       ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(44.0),
+                                    child: e.recipes![index].image != null ? Image.network(
+                                  e.recipes![index].image! ,
+                                  fit: BoxFit.cover,
+                                ): Image.asset('assets/images/no_image_placeholder.png', fit: BoxFit.cover,)
                                 ),
                               ),
                             ),
